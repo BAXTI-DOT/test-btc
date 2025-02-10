@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import Decimal from 'decimal.js'
 import { firstValueFrom } from 'rxjs'
 
 @Injectable()
@@ -24,11 +25,15 @@ export class BtcnService implements OnModuleInit {
 
     const { bidPrice, askPrice } = response.data
 
-    const bid = parseFloat(bidPrice) * (1 - this.commission)
-    const ask = parseFloat(askPrice) * (1 + this.commission)
-    const mid = (bid + ask) / 2
+    const bid = new Decimal(bidPrice).times(new Decimal(1).minus(this.commission))
+    const ask = new Decimal(askPrice).times(new Decimal(1).plus(this.commission))
+    const mid = bid.plus(ask).div(2)
 
-    this.btcPrice = { bid, ask, mid }
+    this.btcPrice = {
+      bid: bid.toNumber(),
+      ask: ask.toNumber(),
+      mid: mid.toNumber(),
+    }
   }
 
   getPrice() {
